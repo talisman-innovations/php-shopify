@@ -46,7 +46,6 @@ class CurlRequest
 
         //Return the transfer as a string
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        //curl_setopt($ch, CURLOPT_HEADER, true);
 
         $headers = array();
         foreach ($httpHeaders as $key => $value) {
@@ -105,10 +104,6 @@ class CurlRequest
      */
     public static function put($url, $data, $httpHeaders = array())
     {
-        
-        //dump($url);
-        //dump($data);
-        
         $ch = self::init($url, $httpHeaders);
         //set the request type
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
@@ -151,13 +146,12 @@ class CurlRequest
              $output = curl_exec($ch);
              $info = curl_getinfo($ch);
              self::$lastHttpCode = $info['http_code'];
-             if($info['http_code']==429) {
-                 unset($output);
-                 unset($info);
-                 sleep(1);
-             } else {
-                 break;
-             }
+             if($info['http_code']!=429) {
+                break; 
+             } 
+             unset($output);
+             unset($info);
+             sleep(0.5);
         }
     
         if (curl_errno($ch)) {
