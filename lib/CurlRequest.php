@@ -46,6 +46,7 @@ class CurlRequest
 
         //Return the transfer as a string
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        //curl_setopt($ch, CURLOPT_HEADER, true);
 
         $headers = array();
         foreach ($httpHeaders as $key => $value) {
@@ -104,6 +105,10 @@ class CurlRequest
      */
     public static function put($url, $data, $httpHeaders = array())
     {
+        
+        //dump($url);
+        //dump($data);
+        
         $ch = self::init($url, $httpHeaders);
         //set the request type
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
@@ -140,18 +145,29 @@ class CurlRequest
      */
     protected static function processRequest($ch)
     {
-        // $output contains the output string
-        $output = curl_exec($ch);
-
+        # Check for 429 leaky bucket error
+        # and pause rerun
+        while(1) {
+             $output = curl_exec($ch);
+             $info = curl_getinfo($ch);
+             self::$lastHttpCode = $info['http_code'];
+             if($info['http_code']==429) {
+                 unset($output);
+                 unset($info);
+                 sleep(1);
+             } else {
+                 break;
+             }
+        }
+    
         if (curl_errno($ch)) {
             throw new Exception\CurlException(curl_errno($ch) . ' : ' . curl_error($ch));
         }
-
-        self::$lastHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
         // close curl resource to free up system resources
         curl_close($ch);
 
         return $output;
     }
+    
 }
