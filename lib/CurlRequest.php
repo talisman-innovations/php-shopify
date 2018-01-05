@@ -151,7 +151,7 @@ class CurlRequest
              } 
              unset($output);
              unset($info);
-             sleep(0.5);
+             usleep(500000);
         }
     
         if (curl_errno($ch)) {
