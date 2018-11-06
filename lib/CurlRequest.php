@@ -8,6 +8,7 @@
 namespace PHPShopify;
 
 
+use ConnectorSupport\Curl\InjectVariables;
 use PHPShopify\Exception\CurlException;
 
 /*
@@ -71,7 +72,14 @@ class CurlRequest
         //Initialize the Curl resource
         $ch = self::init($url, $httpHeaders);
 
-        return self::processRequest($ch);
+        ////
+        curl_setopt($ch, CURLOPT_HEADER, 1);
+        $injector = InjectVariables::instance();
+        $logger = $injector->logger;
+        $logger->logRequest('GET', $url, '', $httpHeaders, '');
+        ////
+
+        return self::processRequest('GET', $url, $ch);
     }
 
     /**
@@ -90,7 +98,14 @@ class CurlRequest
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 
-        return self::processRequest($ch);
+        ////
+        curl_setopt($ch, CURLOPT_HEADER, 1);
+        $injector = InjectVariables::instance();
+        $logger = $injector->logger;
+        $logger->logRequest('POST', $url, '', $httpHeaders, $data);
+        ////
+
+        return self::processRequest('POST', $url, $ch);
     }
 
     /**
@@ -109,7 +124,14 @@ class CurlRequest
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 
-        return self::processRequest($ch);
+        ////
+        curl_setopt($ch, CURLOPT_HEADER, 1);
+        $injector = InjectVariables::instance();
+        $logger = $injector->logger;
+        $logger->logRequest('POST', $url, '', $httpHeaders, $data);
+        ////
+
+        return self::processRequest('PUT', $url, $ch);
     }
 
     /**
@@ -126,30 +148,48 @@ class CurlRequest
         //set the request type
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
 
-        return self::processRequest($ch);
+        ////
+        curl_setopt($ch, CURLOPT_HEADER, 1);
+        $injector = InjectVariables::instance();
+        $logger = $injector->logger;
+        $logger->logRequest('DELETE', $url, '', $httpHeaders, '');
+        ////
+
+        return self::processRequest('DELETE', $url, $ch);
     }
 
     /**
      * Execute a request, release the resource and return output
      *
+     * @param string $method
+     * @param string $url
      * @param resource $ch
      *
      * @throws CurlException if curl request is failed with error
      *
      * @return string
      */
-    protected static function processRequest($ch)
+    protected static function processRequest($method, $url, $ch)
     {
         # Check for 429 leaky bucket error
         while(1) {
              $output = curl_exec($ch);
              self::$lastHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
              if(self::$lastHttpCode != 429) {
-                break; 
-             } 
+                break;
+             }
              usleep(500000);
         }
-    
+
+        ////
+        $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+        $headers = substr($output, 0, $header_size);
+        $output = substr($output, $header_size);
+        $injector = InjectVariables::instance();
+        $logger = $injector->logger;
+        $logger->logResponse($method, $url, self::$lastHttpCode, explode("\r\n", $headers), $output);
+        ////
+
         if (curl_errno($ch)) {
             throw new Exception\CurlException(curl_errno($ch) . ' : ' . curl_error($ch));
         }
@@ -159,5 +199,5 @@ class CurlRequest
 
         return $output;
     }
-    
+
 }
