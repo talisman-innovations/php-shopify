@@ -73,10 +73,12 @@ class CurlRequest
         $ch = self::init($url, $httpHeaders);
 
         ////
-        curl_setopt($ch, CURLOPT_HEADER, 1);
         $injector = InjectVariables::instance();
         $logger = $injector->logger;
-        $logger->logRequest('GET', $url, '', $httpHeaders, '');
+        if ($logger !== null) {
+            curl_setopt($ch, CURLOPT_HEADER, 1);
+            $logger->logRequest('GET', $url, '', $httpHeaders, '');
+        }
         ////
 
         return self::processRequest('GET', $url, $ch);
@@ -99,10 +101,12 @@ class CurlRequest
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 
         ////
-        curl_setopt($ch, CURLOPT_HEADER, 1);
         $injector = InjectVariables::instance();
         $logger = $injector->logger;
-        $logger->logRequest('POST', $url, '', $httpHeaders, $data);
+        if ($logger !== null) {
+            curl_setopt($ch, CURLOPT_HEADER, 1);
+            $logger->logRequest('POST', $url, '', $httpHeaders, '');
+        }
         ////
 
         return self::processRequest('POST', $url, $ch);
@@ -125,10 +129,12 @@ class CurlRequest
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 
         ////
-        curl_setopt($ch, CURLOPT_HEADER, 1);
         $injector = InjectVariables::instance();
         $logger = $injector->logger;
-        $logger->logRequest('POST', $url, '', $httpHeaders, $data);
+        if ($logger !== null) {
+            curl_setopt($ch, CURLOPT_HEADER, 1);
+            $logger->logRequest('PUT', $url, '', $httpHeaders, '');
+        }
         ////
 
         return self::processRequest('PUT', $url, $ch);
@@ -149,10 +155,12 @@ class CurlRequest
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
 
         ////
-        curl_setopt($ch, CURLOPT_HEADER, 1);
         $injector = InjectVariables::instance();
         $logger = $injector->logger;
-        $logger->logRequest('DELETE', $url, '', $httpHeaders, '');
+        if ($logger !== null) {
+            curl_setopt($ch, CURLOPT_HEADER, 1);
+            $logger->logRequest('DELETE', $url, '', $httpHeaders, '');
+        }
         ////
 
         return self::processRequest('DELETE', $url, $ch);
@@ -182,12 +190,14 @@ class CurlRequest
         }
 
         ////
-        $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
-        $headers = substr($output, 0, $header_size);
-        $output = substr($output, $header_size);
         $injector = InjectVariables::instance();
         $logger = $injector->logger;
-        $logger->logResponse($method, $url, self::$lastHttpCode, explode("\r\n", $headers), $output);
+        if ($logger !== null) {
+            $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+            $headers = substr($output, 0, $header_size);
+            $output = substr($output, $header_size);
+            $logger->logResponse($method, $url, self::$lastHttpCode, explode("\r\n", $headers), $output);
+        }
         ////
 
         if (curl_errno($ch)) {
