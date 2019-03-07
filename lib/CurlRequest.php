@@ -105,7 +105,7 @@ class CurlRequest
         $logger = $injector->logger;
         if ($logger !== null) {
             curl_setopt($ch, CURLOPT_HEADER, 1);
-            $logger->logRequest('POST', $url, '', $httpHeaders, '');
+            $logger->logRequest('POST', $url, '', $httpHeaders, $data);
         }
         ////
 
@@ -133,7 +133,7 @@ class CurlRequest
         $logger = $injector->logger;
         if ($logger !== null) {
             curl_setopt($ch, CURLOPT_HEADER, 1);
-            $logger->logRequest('PUT', $url, '', $httpHeaders, '');
+            $logger->logRequest('PUT', $url, '', $httpHeaders, $data);
         }
         ////
 
