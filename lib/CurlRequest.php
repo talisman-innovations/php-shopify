@@ -7,9 +7,9 @@
 
 namespace PHPShopify;
 
-
 use PHPShopify\Exception\CurlException;
 use PHPShopify\Exception\ResourceRateLimitException;
+use Psr\Log\LoggerInterface;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,7 +27,6 @@ class CurlRequest
      * @var integer
      */
     public static $lastHttpCode;
-
 
     /**
      * Initialize the curl resource
@@ -65,72 +64,104 @@ class CurlRequest
     /**
      * Implement a GET request and return output
      *
+     * @param LoggerInterface $logger
      * @param string $url
      * @param array $httpHeaders
      *
      * @return string
+     *
+     * @throws CurlException
+     * @throws ResourceRateLimitException
      */
-    public static function get($url, $httpHeaders = array())
+    public static function get($logger, $url, $httpHeaders = array())
     {
         //Initialize the Curl resource
         $ch = self::init($url, $httpHeaders);
 
-        return self::processRequest($ch);
+        $response =  self::processRequest($ch);
+
+        self::logRequest($logger, 'GET', $url, $httpHeaders, null , $response);
+
+        return $response->getBody();
     }
 
     /**
      * Implement a POST request and return output
      *
+     * @param LoggerInterface $logger
      * @param string $url
      * @param array $data
      * @param array $httpHeaders
      *
      * @return string
+     *
+     * @throws CurlException
+     * @throws ResourceRateLimitException
      */
-    public static function post($url, $data, $httpHeaders = array())
+    public static function post($logger, $url, $data, $httpHeaders = array())
     {
         $ch = self::init($url, $httpHeaders);
         //Set the request type
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 
-        return self::processRequest($ch);
+        $response =  self::processRequest($ch);
+
+        self::logRequest($logger, 'POST', $url, $httpHeaders, null , $response);
+
+        return $response->getBody();
     }
 
     /**
      * Implement a PUT request and return output
      *
+     * @param LoggerInterface $logger
      * @param string $url
-     * @param array $data
+     * @param string $data
      * @param array $httpHeaders
      *
      * @return string
+     *
+     * @throws CurlException
+     * @throws ResourceRateLimitException
      */
-    public static function put($url, $data, $httpHeaders = array())
+    public static function put($logger, $url, $data, $httpHeaders = array())
     {
         $ch = self::init($url, $httpHeaders);
         //set the request type
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 
-        return self::processRequest($ch);
+        $response =  self::processRequest($ch);
+
+        self::logRequest($logger, 'PUT', $url, $httpHeaders, null , $response);
+
+        return $response->getBody();
     }
 
     /**
      * Implement a DELETE request and return output
      *
+     * @param LoggerInterface $logger
      * @param string $url
      * @param array $httpHeaders
      *
      * @return string
+     *
+     * @throws CurlException
+     * @throws ResourceRateLimitException
      */
-    public static function delete($url, $httpHeaders = array())
+    public static function delete($logger, $url, $httpHeaders = array())
     {
         $ch = self::init($url, $httpHeaders);
         //set the request type
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
 
-        return self::processRequest($ch);
+        $response =  self::processRequest($ch);
+
+        self::logRequest($logger, 'DELETE', $url, $httpHeaders, null , $response);
+
+        return $response->getBody();
     }
 
     /**
@@ -138,9 +169,10 @@ class CurlRequest
      *
      * @param resource $ch
      *
-     * @throws CurlException if curl request is failed with error
+     * @return CurlResponse
      *
-     * @return string
+     * @throws ResourceRateLimitException
+     * @throws CurlException if curl request is failed with error
      */
     protected static function processRequest($ch)
     {
@@ -170,7 +202,32 @@ class CurlRequest
         // close curl resource to free up system resources
         curl_close($ch);
 
-        return $response->getBody();
+        return $response;
     }
-    
+
+    /**
+     * @param LoggerInterface $logger
+     * @param string $verb
+     * @param string $url
+     * @param array $httpHeaders
+     * @param string $data
+     * @param CurlResponse $response
+     */
+    protected static function logRequest($logger, $verb, $url, $httpHeaders, $data, $response) {
+
+        $message = $verb . ' ' . $url;
+
+        if ($httpHeaders) {
+            $context['request_headers'] = $httpHeaders;
+        }
+
+        if ($data) {
+            $context['request_body'] = json_decode($data, TRUE);
+        }
+
+        $context['response_headers'] = $response->getHeaders();
+        $context['response_body'] = $response->getBody();
+
+        $logger->info($message, $context);
+    }
 }

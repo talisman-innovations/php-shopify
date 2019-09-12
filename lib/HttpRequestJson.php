@@ -7,6 +7,8 @@
 
 namespace PHPShopify;
 
+use Psr\Log\LoggerInterface;
+
 /**
  * Class HttpRequestJson
  *
@@ -59,16 +61,20 @@ class HttpRequestJson
     /**
      * Implement a GET request and return json decoded output
      *
+     * @param LoggerInterface $logger
      * @param string $url
      * @param array $httpHeaders
      *
-     * @return string
+     * @return array
+     *
+     * @throws Exception\CurlException
+     * @throws Exception\ResourceRateLimitException
      */
-    public static function get($url, $httpHeaders = array())
+    public static function get($logger, $url, $httpHeaders = array())
     {
         self::prepareRequest($httpHeaders);
 
-        $response = CurlRequest::get($url, self::$httpHeaders);
+        $response = CurlRequest::get($logger, $url, self::$httpHeaders);
 
         return self::processResponse($response);
     }
@@ -76,17 +82,20 @@ class HttpRequestJson
     /**
      * Implement a POST request and return json decoded output
      *
+     * @param LoggerInterface $logger
      * @param string $url
      * @param array $dataArray
      * @param array $httpHeaders
      *
-     * @return string
+     * @return array
+     * @throws Exception\CurlException
+     * @throws Exception\ResourceRateLimitException
      */
-    public static function post($url, $dataArray, $httpHeaders = array())
+    public static function post($logger, $url, $dataArray, $httpHeaders = array())
     {
         self::prepareRequest($httpHeaders, $dataArray);
 
-        $response = CurlRequest::post($url, self::$postDataJSON, self::$httpHeaders);
+        $response = CurlRequest::post($logger, $url, self::$postDataJSON, self::$httpHeaders);
 
         return self::processResponse($response);
     }
@@ -94,17 +103,20 @@ class HttpRequestJson
     /**
      * Implement a PUT request and return json decoded output
      *
+     * @param LoggerInterface $logger
      * @param string $url
      * @param array $dataArray
      * @param array $httpHeaders
      *
-     * @return string
+     * @return array
+     * @throws Exception\CurlException
+     * @throws Exception\ResourceRateLimitException
      */
-    public static function put($url, $dataArray, $httpHeaders = array())
+    public static function put($logger, $url, $dataArray, $httpHeaders = array())
     {
         self::prepareRequest($httpHeaders, $dataArray);
 
-        $response = CurlRequest::put($url, self::$postDataJSON, self::$httpHeaders);
+        $response = CurlRequest::put($logger, $url, self::$postDataJSON, self::$httpHeaders);
 
         return self::processResponse($response);
     }
@@ -112,16 +124,20 @@ class HttpRequestJson
     /**
      * Implement a DELETE request and return json decoded output
      *
+     * @param LoggerInterface $logger
      * @param string $url
      * @param array $httpHeaders
      *
-     * @return string
+     * @return array
+     *
+     * @throws Exception\CurlException
+     * @throws Exception\ResourceRateLimitException
      */
-    public static function delete($url, $httpHeaders = array())
+    public static function delete($logger, $url, $httpHeaders = array())
     {
         self::prepareRequest($httpHeaders);
 
-        $response = CurlRequest::delete($url, self::$httpHeaders);
+        $response = CurlRequest::delete($logger, $url, self::$httpHeaders);
 
         return self::processResponse($response);
     }
@@ -135,7 +151,6 @@ class HttpRequestJson
      */
     protected static function processResponse($response)
     {
-
         return json_decode($response, true);
     }
 

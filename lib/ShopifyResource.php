@@ -12,6 +12,7 @@ namespace PHPShopify;
 use PHPShopify\Exception\ApiException;
 use PHPShopify\Exception\SdkException;
 use PHPShopify\Exception\CurlException;
+use Psr\Log\LoggerInterface;
 
 /*
 |--------------------------------------------------------------------------
@@ -106,6 +107,11 @@ abstract class ShopifyResource
     public $id;
 
     /**
+     * @var LoggerInterface
+     */
+    protected $logger;
+
+    /**
      * Create a new Shopify API resource instance.
      *
      * @param integer $id
@@ -125,6 +131,10 @@ abstract class ShopifyResource
             $this->httpHeaders['X-Shopify-Access-Token'] = $config['AccessToken'];
         } elseif (!isset($config['ApiKey']) || !isset($config['Password'])) {
             throw new SdkException("Either AccessToken or ApiKey+Password Combination (in case of private API) is required to access the resources. Please check SDK configuration!");
+        }
+
+        if (isset($config['Logger'])) {
+            $this->logger = $config['Logger'];
         }
     }
 
@@ -308,7 +318,7 @@ abstract class ShopifyResource
     {
         if (!$url) $url  = $this->generateUrl($urlParams);
 
-        $response = HttpRequestJson::get($url, $this->httpHeaders);
+        $response = HttpRequestJson::get($this->logger, $url, $this->httpHeaders);
 
         if (!$dataKey) $dataKey = $this->id ? $this->resourceKey : $this->pluralizeKey();
 
@@ -373,7 +383,7 @@ abstract class ShopifyResource
 
         if ($wrapData && !empty($dataArray)) $dataArray = $this->wrapData($dataArray);
 
-        $response = HttpRequestJson::post($url, $dataArray, $this->httpHeaders);
+        $response = HttpRequestJson::post($this->logger, $url, $dataArray, $this->httpHeaders);
 
         return $this->processResponse($response, $this->resourceKey);
     }
@@ -396,7 +406,7 @@ abstract class ShopifyResource
 
         if ($wrapData && !empty($dataArray)) $dataArray = $this->wrapData($dataArray);
 
-        $response = HttpRequestJson::put($url, $dataArray, $this->httpHeaders);
+        $response = HttpRequestJson::put($this->logger, $url, $dataArray, $this->httpHeaders);
 
         return $this->processResponse($response, $this->resourceKey);
     }
@@ -415,7 +425,7 @@ abstract class ShopifyResource
     {
         if (!$url) $url = $this->generateUrl($urlParams);
 
-        $response = HttpRequestJson::delete($url, $this->httpHeaders);
+        $response = HttpRequestJson::delete($this->logger, $url, $this->httpHeaders);
 
         return $this->processResponse($response);
     }
