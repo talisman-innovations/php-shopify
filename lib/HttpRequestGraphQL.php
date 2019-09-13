@@ -10,6 +10,7 @@ namespace PHPShopify;
 
 
 use PHPShopify\Exception\SdkException;
+use Psr\Log\LoggerInterface;
 
 class HttpRequestGraphQL extends HttpRequestJson
 {
@@ -51,17 +52,21 @@ class HttpRequestGraphQL extends HttpRequestJson
     /**
      * Implement a POST request and return json decoded output
      *
+     * @param LoggerInterface $logger
      * @param string $url
      * @param mixed $data
      * @param array $httpHeaders
      *
-     * @return string
+     * @return array
+     * @throws Exception\CurlException
+     * @throws Exception\ResourceRateLimitException
+     * @throws SdkException
      */
-    public static function post($url, $data, $httpHeaders = array())
+    public static function post($logger, $url, $data, $httpHeaders = array())
     {
         self::prepareRequest($httpHeaders, $data);
 
-        $response = CurlRequest::post($url, self::$postDataGraphQL, self::$httpHeaders);
+        $response = CurlRequest::post($logger, $url, self::$postDataGraphQL, self::$httpHeaders);
 
         return self::processResponse($response);
     }

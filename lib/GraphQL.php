@@ -31,15 +31,19 @@ class GraphQL extends ShopifyResource
      * @param string $url
      * @param bool $wrapData
      *
+     * @return array
+     * @throws Exception\ApiException
+     * @throws Exception\CurlException
+     * @throws Exception\ResourceRateLimitException
+     * @throws SdkException
      * @uses HttpRequestGraphQL::post() to send the HTTP request
      *
-     * @return array
      */
     public function post($graphQL, $url = null, $wrapData = false)
     {
         if (!$url) $url = $this->generateUrl();
 
-        $response = HttpRequestGraphQL::post($url, $graphQL, $this->httpHeaders);
+        $response = HttpRequestGraphQL::post($this->logger, $url, $graphQL, $this->httpHeaders);
 
         return $this->processResponse($response);
     }

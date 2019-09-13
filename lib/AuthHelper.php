@@ -168,7 +168,9 @@ class AuthHelper
                 'code' => $_GET['code'],
             );
 
-            $response = HttpRequestJson::post($config['AdminUrl'] . 'oauth/access_token', $data);
+            $logger = isset($config['Logger']) ? $config['Logger'] : null;
+
+            $response = HttpRequestJson::post($logger, $config['AdminUrl'] . 'oauth/access_token', $data);
 
             return isset($response['access_token']) ? $response['access_token'] : null;
         } else {
