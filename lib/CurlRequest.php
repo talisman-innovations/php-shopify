@@ -213,7 +213,11 @@ class CurlRequest
      * @param string $data
      * @param CurlResponse $response
      */
-    protected static function logRequest($logger, $verb, $url, $httpHeaders, $data, $response) {
+    protected static function logRequest($logger, $verb, $url, $httpHeaders, $data, $response)
+    {
+        if (!$logger) {
+            return;
+        }
 
         $message = $verb . ' ' . $url;
 
