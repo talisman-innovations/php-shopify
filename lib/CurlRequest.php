@@ -207,30 +207,27 @@ class CurlRequest
 
     /**
      * @param LoggerInterface $logger
-     * @param string $verb
+     * @param string $method
      * @param string $url
      * @param array $httpHeaders
      * @param string $data
      * @param CurlResponse $response
      */
-    protected static function logRequest($logger, $verb, $url, $httpHeaders, $data, $response)
+    protected static function logRequest($logger, $method, $url, $httpHeaders, $data, $response)
     {
         if (!$logger) {
             return;
         }
 
-        $message = $verb . ' ' . $url;
+        $message = $method . ' ' . $url;
 
-        if ($httpHeaders) {
-            $context['request_headers'] = $httpHeaders;
-        }
-
-        if ($data) {
-            $context['request_body'] = json_decode($data, TRUE);
-        }
+        $context['url'] = $url;
+        $context['method'] = $method;
+        $context['request_headers'] = $httpHeaders;
+        $context['request_body'] = $context['request_body'] = json_decode($data, TRUE);
 
         $context['response_headers'] = $response->getHeaders();
-        $context['response_body'] = $response->getBody();
+        $context['response_body'] =$response->getBody();
 
         $logger->info($message, $context);
     }
