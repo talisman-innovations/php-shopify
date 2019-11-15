@@ -224,10 +224,14 @@ class CurlRequest
         $context['url'] = $url;
         $context['method'] = $method;
         $context['request_headers'] = $httpHeaders;
-        $context['request_body'] = $context['request_body'] = json_decode($data, TRUE);
+
+        $body = json_decode($data, TRUE);
+        $context['request_body'] = $body ? $body : $data;
 
         $context['response_headers'] = $response->getHeaders();
-        $context['response_body'] =$response->getBody();
+
+        $body = json_decode($response->getBody(), TRUE);
+        $context['response_body'] = $body ? $body : $response->getBody();
 
         $logger->info($message, $context);
     }
