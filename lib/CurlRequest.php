@@ -107,7 +107,7 @@ class CurlRequest
 
         $response =  self::processRequest($ch);
 
-        self::logRequest($logger, 'POST', $url, $httpHeaders, null , $response);
+        self::logRequest($logger, 'POST', $url, $httpHeaders, $data, $response);
 
         return $response->getBody();
     }
@@ -134,7 +134,7 @@ class CurlRequest
 
         $response =  self::processRequest($ch);
 
-        self::logRequest($logger, 'PUT', $url, $httpHeaders, null , $response);
+        self::logRequest($logger, 'PUT', $url, $httpHeaders, $data, $response);
 
         return $response->getBody();
     }
