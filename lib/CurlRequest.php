@@ -80,7 +80,7 @@ class CurlRequest
 
         $response =  self::processRequest($ch);
 
-        self::logRequest($logger, 'GET', $url, $httpHeaders, null , $response);
+        self::logRequest($logger, 'GET', $url, $httpHeaders, null , self::$lastHttpCode, $response);
 
         return $response->getBody();
     }
@@ -107,7 +107,7 @@ class CurlRequest
 
         $response =  self::processRequest($ch);
 
-        self::logRequest($logger, 'POST', $url, $httpHeaders, $data, $response);
+        self::logRequest($logger, 'POST', $url, $httpHeaders, $data, self::$lastHttpCode, $response);
 
         return $response->getBody();
     }
@@ -134,7 +134,7 @@ class CurlRequest
 
         $response =  self::processRequest($ch);
 
-        self::logRequest($logger, 'PUT', $url, $httpHeaders, $data, $response);
+        self::logRequest($logger, 'PUT', $url, $httpHeaders, $data, self::$lastHttpCode, $response);
 
         return $response->getBody();
     }
@@ -159,7 +159,7 @@ class CurlRequest
 
         $response =  self::processRequest($ch);
 
-        self::logRequest($logger, 'DELETE', $url, $httpHeaders, null , $response);
+        self::logRequest($logger, 'DELETE', $url, $httpHeaders, null , self::$lastHttpCode, $response);
 
         return $response->getBody();
     }
@@ -211,9 +211,10 @@ class CurlRequest
      * @param string $url
      * @param array $httpHeaders
      * @param string $data
+     * @param int $code
      * @param CurlResponse $response
      */
-    protected static function logRequest($logger, $method, $url, $httpHeaders, $data, $response)
+    protected static function logRequest($logger, $method, $url, $httpHeaders, $data, $code, $response)
     {
         if (!$logger) {
             return;
@@ -228,6 +229,7 @@ class CurlRequest
         $body = json_decode($data, TRUE);
         $context['request_body'] = $body ? $body : $data;
 
+        $context['status'] = $code;
         $context['response_headers'] = $response->getHeaders();
 
         $body = json_decode($response->getBody(), TRUE);
