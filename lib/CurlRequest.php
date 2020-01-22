@@ -90,7 +90,7 @@ class CurlRequest
      *
      * @param LoggerInterface $logger
      * @param string $url
-     * @param array $data
+     * @param string $data
      * @param array $httpHeaders
      *
      * @return string

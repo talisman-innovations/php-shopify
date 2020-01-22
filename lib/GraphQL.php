@@ -30,6 +30,7 @@ class GraphQL extends ShopifyResource
      * @param string $graphQL A valid GraphQL String. @see https://help.shopify.com/en/api/graphql-admin-api/graphiql-builder GraphiQL builder - you can build your graphql string from here.
      * @param string $url
      * @param bool $wrapData
+     * @param array|null $variables
      *
      * @return array
      * @throws Exception\ApiException
@@ -39,11 +40,11 @@ class GraphQL extends ShopifyResource
      * @uses HttpRequestGraphQL::post() to send the HTTP request
      *
      */
-    public function post($graphQL, $url = null, $wrapData = false)
+    public function post($graphQL, $url = null, $wrapData = false, $variables = null)
     {
         if (!$url) $url = $this->generateUrl();
 
-        $response = HttpRequestGraphQL::post($this->logger, $url, $graphQL, $this->httpHeaders);
+        $response = HttpRequestGraphQL::post($this->logger, $url, $graphQL, $this->httpHeaders, $variables);
 
         return $this->processResponse($response);
     }

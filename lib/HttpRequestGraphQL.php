@@ -24,14 +24,15 @@ class HttpRequestGraphQL extends HttpRequestJson
     /**
      * Prepare the data and request headers before making the call
      *
-     * @param mixed $data
      * @param array $httpHeaders
+     * @param mixed $data
+     * @param array|null $variables
      *
      * @return void
      *
      * @throws SdkException if $data is not a string
      */
-    protected static function prepareRequest($httpHeaders = array(), $data = array())
+    protected static function prepareRequest($httpHeaders = array(), $data = array(), $variables = null)
     {
 
         if (is_string($data)) {
@@ -45,8 +46,13 @@ class HttpRequestGraphQL extends HttpRequestJson
         }
 
         self::$httpHeaders = $httpHeaders;
-        self::$httpHeaders['Content-type'] = 'application/graphql';
 
+        if (is_array($variables)) {
+            self::$postDataGraphQL = json_encode(['query' => $data, 'variables' => $variables]);
+            self::$httpHeaders['Content-type'] = 'application/json';
+        } else {
+            self::$httpHeaders['Content-type'] = 'application/graphql';
+        }
     }
 
     /**
@@ -56,15 +62,16 @@ class HttpRequestGraphQL extends HttpRequestJson
      * @param string $url
      * @param mixed $data
      * @param array $httpHeaders
+     * @param array|null $variables
      *
      * @return array
      * @throws Exception\CurlException
      * @throws Exception\ResourceRateLimitException
      * @throws SdkException
      */
-    public static function post($logger, $url, $data, $httpHeaders = array())
+    public static function post($logger, $url, $data, $httpHeaders = array(), $variables = null)
     {
-        self::prepareRequest($httpHeaders, $data);
+        self::prepareRequest($httpHeaders, $data, $variables);
 
         $response = CurlRequest::post($logger, $url, self::$postDataGraphQL, self::$httpHeaders);
 
