@@ -189,6 +189,12 @@ class CurlRequest
             $response = new CurlResponse($output);
 
             self::$lastHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+            if (self::$lastHttpCode == 520) {
+                sleep(1);
+                break;
+            }
+            
             if (self::$lastHttpCode != 429) {
                 break;
             }
