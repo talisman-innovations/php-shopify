@@ -88,8 +88,11 @@ class HttpRequestJson
      * @param array $httpHeaders
      *
      * @return array
+<<<<<<< HEAD
      * @throws Exception\CurlException
      * @throws Exception\ResourceRateLimitException
+=======
+>>>>>>> upstream/master
      */
     public static function post($logger, $url, $dataArray, $httpHeaders = array())
     {
@@ -109,8 +112,11 @@ class HttpRequestJson
      * @param array $httpHeaders
      *
      * @return array
+<<<<<<< HEAD
      * @throws Exception\CurlException
      * @throws Exception\ResourceRateLimitException
+=======
+>>>>>>> upstream/master
      */
     public static function put($logger, $url, $dataArray, $httpHeaders = array())
     {
@@ -129,9 +135,12 @@ class HttpRequestJson
      * @param array $httpHeaders
      *
      * @return array
+<<<<<<< HEAD
      *
      * @throws Exception\CurlException
      * @throws Exception\ResourceRateLimitException
+=======
+>>>>>>> upstream/master
      */
     public static function delete($logger, $url, $httpHeaders = array())
     {

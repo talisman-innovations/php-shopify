@@ -68,9 +68,11 @@ use PHPShopify\Exception\SdkException;
 
 /**
  * @property-read AbandonedCheckout $AbandonedCheckout
+ * @property-read ApplicationCharge $ApplicationCharge
  * @property-read Blog $Blog
  * @property-read CarrierService $CarrierService
  * @property-read Collect $Collect
+ * @property-read Collection $Collection
  * @property-read Comment $Comment
  * @property-read Country $Country
  * @property-read Currency $Currency
@@ -80,7 +82,6 @@ use PHPShopify\Exception\SdkException;
  * @property-read Discount $Discount
  * @property-read DiscountCode $DiscountCode
  * @property-read DraftOrder $DraftOrder
- * @property-read PriceRule $PriceRule
  * @property-read Event $Event
  * @property-read FulfillmentService $FulfillmentService
  * @property-read GiftCard $GiftCard
@@ -95,21 +96,26 @@ use PHPShopify\Exception\SdkException;
  * @property-read Product $Product
  * @property-read ProductListing $ProductListing
  * @property-read ProductVariant $ProductVariant
+ * @property-read PriceRule $PriceRule
  * @property-read RecurringApplicationCharge $RecurringApplicationCharge
  * @property-read Redirect $Redirect
+ * @property-read Report $Report
  * @property-read ScriptTag $ScriptTag
  * @property-read ShippingZone $ShippingZone
  * @property-read Shop $Shop
  * @property-read SmartCollection $SmartCollection
+ * @property-read ShopifyPayment $ShopifyPayment
  * @property-read Theme $Theme
  * @property-read User $User
  * @property-read Webhook $Webhook
  * @property-read GraphQL $GraphQL
  *
  * @method AbandonedCheckout AbandonedCheckout(integer $id = null)
+ * @method ApplicationCharge ApplicationCharge(integer $id = null)
  * @method Blog Blog(integer $id = null)
  * @method CarrierService CarrierService(integer $id = null)
  * @method Collect Collect(integer $id = null)
+ * @method Collection Collection(integer $id = null)
  * @method Comment Comment(integer $id = null)
  * @method Country Country(integer $id = null)
  * @method Currency Currency(integer $id = null)
@@ -119,7 +125,6 @@ use PHPShopify\Exception\SdkException;
  * @method Discount Discount(integer $id = null)
  * @method DraftOrder DraftOrder(integer $id = null)
  * @method DiscountCode DiscountCode(integer $id = null)
- * @method PriceRule PriceRule(integer $id = null)
  * @method Event Event(integer $id = null)
  * @method FulfillmentService FulfillmentService(integer $id = null)
  * @method GiftCard GiftCard(integer $id = null)
@@ -134,8 +139,10 @@ use PHPShopify\Exception\SdkException;
  * @method Product Product(integer $id = null)
  * @method ProductListing ProductListing(integer $id = null)
  * @method ProductVariant ProductVariant(integer $id = null)
+ * @method PriceRule PriceRule(integer $id = null)
  * @method RecurringApplicationCharge RecurringApplicationCharge(integer $id = null)
  * @method Redirect Redirect(integer $id = null)
+ * @method Report Report(integer $id = null)
  * @method ScriptTag ScriptTag(integer $id = null)
  * @method ShippingZone ShippingZone(integer $id = null)
  * @method Shop Shop(integer $id = null)
@@ -158,6 +165,7 @@ class ShopifySDK
         'Blog',
         'CarrierService',
         'Collect',
+        'Collection',
         'Comment',
         'Country',
         'Currency',
@@ -189,6 +197,7 @@ class ShopifySDK
         'ShippingZone',
         'Shop',
         'SmartCollection',
+        'ShopifyPayment',
         'Theme',
         'User',
         'Webhook',
@@ -206,12 +215,16 @@ class ShopifySDK
     public static $timeAllowedForEachApiCall = .5;
 
     /**
+     * @var string Default Shopify API version
+     */
+    public static $defaultApiVersion = '2020-01';
+
+    /**
      * Shop / API configurations
      *
      * @var array
      */
     public static $config = array(
-        'ApiVersion' => '2019-10'
     );
 
     /**
@@ -310,7 +323,7 @@ class ShopifySDK
          * Reset config to it's initial values
          */
         self::$config = array(
-            'ApiVersion' => '2019-04'
+            'ApiVersion' => self::$defaultApiVersion
         );
 
         foreach ($config as $key => $value) {

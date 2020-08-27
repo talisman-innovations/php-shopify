@@ -29,6 +29,13 @@ class CurlRequest
     public static $lastHttpCode;
 
     /**
+     * HTTP response headers of last executed request
+     *
+     * @var array
+     */
+    public static $lastHttpResponseHeaders = array();
+
+    /**
      * Initialize the curl resource
      *
      * @param string $url
