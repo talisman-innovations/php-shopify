@@ -21,6 +21,8 @@ class HttpRequestGraphQL extends HttpRequestJson
      */
     private static $postDataGraphQL;
 
+    const MAX_RETRIES = 3;
+
     /**
      * Prepare the data and request headers before making the call
      *
@@ -73,8 +75,31 @@ class HttpRequestGraphQL extends HttpRequestJson
     {
         self::prepareRequest($httpHeaders, $data, $variables);
 
-        $response = CurlRequest::post($logger, $url, self::$postDataGraphQL, self::$httpHeaders);
+        for ($retries = 0; $retries < self::MAX_RETRIES; $retries++)
+        {
+            $rawResponse = CurlRequest::post($logger, $url, self::$postDataGraphQL, self::$httpHeaders);
 
-        return self::processResponse($response);
+            $response = self::processResponse($rawResponse);
+
+            // Check for throttling https://help.shopify.com/api/graphql-admin-api/graphql-admin-api-rate-limits"
+            if (!isset($response['errors']['extensions']['code'])) {
+                break;
+            }
+
+            if ($response['errors']['extensions']['code'] != 'THROTTLED') {
+                break;
+            }
+
+            if (!isset($response['extensions']['cost'])) {
+                break;
+            }
+
+            $cost = $response['extensions']['cost'];
+            $waitSeconds = ($cost['requestedQueryCost'] - $cost['throttleStatus']['currentlyAvailable']) / $cost['throttleStatus']['restoreRate'];
+
+            usleep($waitSeconds * 1E6);
+        }
+
+        return $response;
     }
 }
