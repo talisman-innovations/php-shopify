@@ -194,7 +194,7 @@ class CurlRequest
                 sleep(1);
                 break;
             }
-            
+
             if (self::$lastHttpCode != 429) {
                 break;
             }
