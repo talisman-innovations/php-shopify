@@ -81,25 +81,45 @@ class HttpRequestGraphQL extends HttpRequestJson
 
             $response = self::processResponse($rawResponse);
 
-            // Check for throttling https://help.shopify.com/api/graphql-admin-api/graphql-admin-api-rate-limits"
-            if (!isset($response['errors']['extensions']['code'])) {
+            $wait = self::waitForThrottle($response);
+
+            if ($wait == 0) {
                 break;
             }
 
-            if ($response['errors']['extensions']['code'] != 'THROTTLED') {
-                break;
-            }
-
-            if (!isset($response['extensions']['cost'])) {
-                break;
-            }
-
-            $cost = $response['extensions']['cost'];
-            $waitSeconds = ($cost['requestedQueryCost'] - $cost['throttleStatus']['currentlyAvailable']) / $cost['throttleStatus']['restoreRate'];
-
-            usleep($waitSeconds * 1E6);
+            usleep($wait * 1E6);
         }
 
         return $response;
+    }
+
+    /**
+     * @param array $response
+     * @return float seconds
+     */
+    public static function waitForThrottle(array $response)
+    {
+        // Check for throttling https://help.shopify.com/api/graphql-admin-api/graphql-admin-api-rate-limits"
+        if (!isset($response['errors'])) {
+            return 0.0;
+        }
+
+        $throttled = false;
+        foreach ($response['errors'] as $error) {
+            if ($error['extensions']['code'] == 'THROTTLED') {
+                $throttled = true;
+            }
+        }
+
+        if (!$throttled) {
+            return 0.0;
+        }
+
+        if (!isset($response['extensions']['cost'])) {
+            return 0.0;
+        }
+
+        $cost = $response['extensions']['cost'];
+        return ($cost['requestedQueryCost'] - $cost['throttleStatus']['currentlyAvailable']) / $cost['throttleStatus']['restoreRate'];
     }
 }

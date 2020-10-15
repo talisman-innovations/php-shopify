@@ -7,7 +7,9 @@
 
 namespace PHPShopify;
 
-class TestResource extends \PHPUnit_Framework_TestCase
+use PHPUnit\Framework\TestCase;
+
+class TestResource extends TestCase
 {
     /**
      * @var ShopifySDK $shopify;
