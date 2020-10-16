@@ -35,6 +35,8 @@ class CurlRequest
      */
     public static $lastHttpResponseHeaders = array();
 
+    const MAX_RETRIES = 3;
+
     /**
      * Initialize the curl resource
      *
@@ -184,15 +186,16 @@ class CurlRequest
     protected static function processRequest($ch)
     {
         # Check for 429 leaky bucket error
-        while (1) {
+        for ($retries = 0; $retries < self::MAX_RETRIES; $retries++)
+        {
             $output   = curl_exec($ch);
             $response = new CurlResponse($output);
 
             self::$lastHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
-            if (self::$lastHttpCode == 520) {
-                sleep(1);
-                break;
+            if (in_array(self::$lastHttpCode, [520, 503, 520] )) {
+                sleep(1 << $retries);
+                continue;
             }
 
             if (self::$lastHttpCode != 429) {
@@ -205,7 +208,7 @@ class CurlRequest
                 throw new ResourceRateLimitException($response->getBody());
             }
 
-            usleep(500000);
+            usleep($response->getHeader('Retry-After') * 1E6);
         }
 
         if (curl_errno($ch)) {

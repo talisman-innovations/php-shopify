@@ -122,4 +122,5 @@ class HttpRequestGraphQL extends HttpRequestJson
         $cost = $response['extensions']['cost'];
         return ($cost['requestedQueryCost'] - $cost['throttleStatus']['currentlyAvailable']) / $cost['throttleStatus']['restoreRate'];
     }
+    
 }
