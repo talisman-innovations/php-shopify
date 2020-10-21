@@ -68,7 +68,6 @@ class HttpRequestGraphQL extends HttpRequestJson
      *
      * @return array
      * @throws Exception\CurlException
-     * @throws Exception\ResourceRateLimitException
      * @throws SdkException
      */
     public static function post($logger, $url, $data, $httpHeaders = array(), $variables = null)
@@ -83,11 +82,12 @@ class HttpRequestGraphQL extends HttpRequestJson
 
             $wait = self::waitForThrottle($response);
 
-            if ($wait == 0) {
-                break;
+            if ($wait > 0.0) {
+                usleep($wait * 1E6);
+                continue;
             }
 
-            usleep($wait * 1E6);
+           break;
         }
 
         return $response;
