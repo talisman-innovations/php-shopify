@@ -8,7 +8,6 @@
 namespace PHPShopify;
 
 use PHPShopify\Exception\CurlException;
-use PHPShopify\Exception\ResourceRateLimitException;
 use Psr\Log\LoggerInterface;
 
 /*
@@ -80,14 +79,13 @@ class CurlRequest
      * @return string
      *
      * @throws CurlException
-     * @throws ResourceRateLimitException
      */
     public static function get($logger, $url, $httpHeaders = array())
     {
         //Initialize the Curl resource
         $ch = self::init($url, $httpHeaders);
 
-        $response =  self::processRequest($ch);
+        $response =  self::processRequest($ch, $logger);
 
         self::logRequest($logger, 'GET', $url, $httpHeaders, null , self::$lastHttpCode, $response);
 
@@ -105,7 +103,6 @@ class CurlRequest
      * @return string
      *
      * @throws CurlException
-     * @throws ResourceRateLimitException
      */
     public static function post($logger, $url, $data, $httpHeaders = array())
     {
@@ -114,7 +111,7 @@ class CurlRequest
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 
-        $response =  self::processRequest($ch);
+        $response =  self::processRequest($ch, $logger);
 
         self::logRequest($logger, 'POST', $url, $httpHeaders, $data, self::$lastHttpCode, $response);
 
@@ -132,7 +129,6 @@ class CurlRequest
      * @return string
      *
      * @throws CurlException
-     * @throws ResourceRateLimitException
      */
     public static function put($logger, $url, $data, $httpHeaders = array())
     {
@@ -141,7 +137,7 @@ class CurlRequest
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 
-        $response =  self::processRequest($ch);
+        $response =  self::processRequest($ch, $logger);
 
         self::logRequest($logger, 'PUT', $url, $httpHeaders, $data, self::$lastHttpCode, $response);
 
@@ -158,7 +154,6 @@ class CurlRequest
      * @return string
      *
      * @throws CurlException
-     * @throws ResourceRateLimitException
      */
     public static function delete($logger, $url, $httpHeaders = array())
     {
@@ -166,7 +161,7 @@ class CurlRequest
         //set the request type
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
 
-        $response =  self::processRequest($ch);
+        $response =  self::processRequest($ch, $logger);
 
         self::logRequest($logger, 'DELETE', $url, $httpHeaders, null , self::$lastHttpCode, $response);
 
@@ -178,12 +173,12 @@ class CurlRequest
      *
      * @param resource $ch
      *
+     * @param LoggerInterface $logger
      * @return CurlResponse
      *
-     * @throws ResourceRateLimitException
      * @throws CurlException if curl request is failed with error
      */
-    protected static function processRequest($ch)
+    protected static function processRequest($ch, $logger)
     {
         # Check for 429 leaky bucket error
         for ($retries = 0; $retries < self::MAX_RETRIES; $retries++)
@@ -193,22 +188,21 @@ class CurlRequest
 
             self::$lastHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
-            if (in_array(self::$lastHttpCode, [520, 503, 520] )) {
-                sleep(1 << $retries);
-                continue;
+            switch (self::$lastHttpCode) {
+                case 503:
+                case 520:
+                    $sleep = 1 << $retries;
+                    $logger->info("Shopify unavailable, retry after $sleep seconds");
+                    sleep($sleep);
+                    continue 2;
+                case 429:
+                    $sleep = $response->getHeader('Retry-After');
+                    $logger->info("Shopify rate limiter, retry after $sleep seconds");
+                    usleep($sleep * 1E6);
+                    continue 2;
             }
 
-            if (self::$lastHttpCode != 429) {
-                break;
-            }
-
-            $limitHeader = explode('/', $response->getHeader('X-Shopify-Shop-Api-Call-Limit'), 2);
-
-            if (isset($limitHeader[1]) && $limitHeader[0] < $limitHeader[1]) {
-                throw new ResourceRateLimitException($response->getBody());
-            }
-
-            usleep($response->getHeader('Retry-After') * 1E6);
+            break;
         }
 
         if (curl_errno($ch)) {
