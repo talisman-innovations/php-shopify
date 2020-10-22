@@ -85,7 +85,7 @@ class CurlRequest
         //Initialize the Curl resource
         $ch = self::init($url, $httpHeaders);
 
-        $response =  self::processRequest($ch, $logger);
+        $response =  self::processRequest($ch, $url, $httpHeaders, $logger);
 
         self::logRequest($logger, 'GET', $url, $httpHeaders, null , self::$lastHttpCode, $response);
 
@@ -111,7 +111,7 @@ class CurlRequest
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 
-        $response =  self::processRequest($ch, $logger);
+        $response =  self::processRequest($ch, $url, $httpHeaders, $logger);
 
         self::logRequest($logger, 'POST', $url, $httpHeaders, $data, self::$lastHttpCode, $response);
 
@@ -137,7 +137,7 @@ class CurlRequest
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 
-        $response =  self::processRequest($ch, $logger);
+        $response =  self::processRequest($ch, $url, $httpHeaders, $logger);
 
         self::logRequest($logger, 'PUT', $url, $httpHeaders, $data, self::$lastHttpCode, $response);
 
@@ -161,9 +161,7 @@ class CurlRequest
         //set the request type
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
 
-        $response =  self::processRequest($ch, $logger);
-
-        self::logRequest($logger, 'DELETE', $url, $httpHeaders, null , self::$lastHttpCode, $response);
+        $response =  self::processRequest($ch, $url, $httpHeaders, $logger);
 
         return $response->getBody();
     }
@@ -172,19 +170,22 @@ class CurlRequest
      * Execute a request, release the resource and return output
      *
      * @param resource $ch
-     *
+     * @param string $url
+     * @param array $httpHeaders
      * @param LoggerInterface $logger
      * @return CurlResponse
      *
      * @throws CurlException if curl request is failed with error
      */
-    protected static function processRequest($ch, $logger)
+    protected static function processRequest($ch, $url, $httpHeaders, $logger)
     {
         # Check for 429 leaky bucket error
         for ($retries = 0; $retries < self::MAX_RETRIES; $retries++)
         {
             $output   = curl_exec($ch);
             $response = new CurlResponse($output);
+
+            self::logRequest($logger, 'DELETE', $url, $httpHeaders, null , self::$lastHttpCode, $response);
 
             self::$lastHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
@@ -194,12 +195,12 @@ class CurlRequest
                     $sleep = 1 << $retries;
                     $logger->info("Shopify unavailable, retry after $sleep seconds");
                     sleep($sleep);
-                    continue 2;
+                    continue;
                 case 429:
                     $sleep = $response->getHeader('Retry-After');
                     $logger->info("Shopify rate limiter, retry after $sleep seconds");
                     usleep($sleep * 1E6);
-                    continue 2;
+                    continue;
             }
 
             break;
