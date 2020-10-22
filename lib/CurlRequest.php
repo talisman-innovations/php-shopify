@@ -133,7 +133,7 @@ class CurlRequest
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 
         $response =  self::processRequest($ch, $url, $httpHeaders, $data, $logger);
-        
+
         return $response->getBody();
     }
 
@@ -189,12 +189,12 @@ class CurlRequest
                     $sleep = 1 << $retries;
                     $logger->info("Shopify unavailable, retry after $sleep seconds");
                     sleep($sleep);
-                    continue;
+                    continue 2;
                 case 429:
                     $sleep = $response->getHeader('Retry-After') + 0.5;
                     $logger->info("Shopify rate limiter, retry after $sleep seconds");
                     usleep($sleep * 1E6);
-                    continue;
+                    continue 2;
             }
 
             break;
