@@ -84,7 +84,7 @@ class CurlRequest
         //Initialize the Curl resource
         $ch = self::init($url, $httpHeaders);
 
-        $response =  self::processRequest($ch, $url, $httpHeaders, null, $logger);
+        $response =  self::processRequest($ch, 'GET', $url, $httpHeaders, null, $logger);
 
         return $response->getBody();
     }
@@ -108,7 +108,7 @@ class CurlRequest
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 
-        $response =  self::processRequest($ch, $url, $httpHeaders, $data, $logger);
+        $response =  self::processRequest($ch, 'POST', $url, $httpHeaders, $data, $logger);
 
         return $response->getBody();
     }
@@ -132,7 +132,7 @@ class CurlRequest
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 
-        $response =  self::processRequest($ch, $url, $httpHeaders, $data, $logger);
+        $response =  self::processRequest($ch, 'PUT', $url, $httpHeaders, $data, $logger);
 
         return $response->getBody();
     }
@@ -154,7 +154,7 @@ class CurlRequest
         //set the request type
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
 
-        $response =  self::processRequest($ch, $url, $httpHeaders, null, $logger);
+        $response =  self::processRequest($ch, 'DELETE', $url, $httpHeaders, null, $logger);
 
         return $response->getBody();
     }
@@ -163,6 +163,7 @@ class CurlRequest
      * Execute a request, release the resource and return output
      *
      * @param resource $ch
+     * @param $method
      * @param string $url
      * @param array $httpHeaders
      * @param string $data
@@ -171,7 +172,7 @@ class CurlRequest
      *
      * @throws CurlException if curl request is failed with error
      */
-    protected static function processRequest($ch, $url, $httpHeaders, $data, $logger)
+    protected static function processRequest($ch, $method, $url, $httpHeaders, $data, $logger)
     {
         # Check for 429 leaky bucket error
         for ($retries = 0; $retries < self::MAX_RETRIES; $retries++)
@@ -179,7 +180,7 @@ class CurlRequest
             $output   = curl_exec($ch);
             $response = new CurlResponse($output);
 
-            self::logRequest($logger, 'DELETE', $url, $httpHeaders, $data , self::$lastHttpCode, $response);
+            self::logRequest($logger, $method, $url, $httpHeaders, $data , self::$lastHttpCode, $response);
 
             self::$lastHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
