@@ -34,7 +34,7 @@ class CurlRequest
      */
     public static $lastHttpResponseHeaders = array();
 
-    const MAX_RETRIES = 3;
+    const MAX_RETRIES = 5;
 
     /**
      * Initialize the curl resource
@@ -192,11 +192,17 @@ class CurlRequest
                     sleep($sleep);
                     continue 2;
                 case 429:
-                    $sleep = $response->getHeader('Retry-After') + 0.5;
+                    $sleep = $response->getHeader('Retry-After');
                     $logger->info("Shopify rate limiter, retry after $sleep seconds, retry $retries");
                     usleep($sleep * 1E6);
-                    $logger->info("Shopify rate limiter, finished sleeping");
                     continue 2;
+                default:
+                    $usage = $response->getHeader(' X-Shopify-Shop-Api-Call-Limit');
+                    list($used, $total) = explode('/', $usage);
+                    if ($total - $used  <= 2) {
+                        $logger->info("Shopify rate limiter, used $usage, waiting 1 second");
+                        sleep(1);
+                    }
             }
 
             break;
