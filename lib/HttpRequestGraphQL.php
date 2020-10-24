@@ -78,14 +78,14 @@ class HttpRequestGraphQL extends HttpRequestJson
 
             $response = self::processResponse($rawResponse);
 
-            $wait = self::waitForThrottle($response, $logger);
+            $wait = ceil(self::waitForThrottle($response, $logger));
 
             if ($wait <= 0.0) {
                 break;
             }
 
             $logger->info("Shopify GraphQL throttle, sleeping $wait seconds");
-            usleep($wait * 1E6);
+            sleep($wait);
         }
 
         return $response;
