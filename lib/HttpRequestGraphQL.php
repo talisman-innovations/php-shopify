@@ -22,6 +22,8 @@ class HttpRequestGraphQL extends HttpRequestJson
     private static $postDataGraphQL;
 
     const MAX_RETRIES = 3;
+    const MAX_REQUESTED_COST = 500;
+    const MAX_ACTUAL_COST = 200;
 
     /**
      * Prepare the data and request headers before making the call
@@ -78,9 +80,15 @@ class HttpRequestGraphQL extends HttpRequestJson
 
             $response = self::processResponse($rawResponse);
 
-            $wait = ceil(self::waitForThrottle($response, $logger));
+            $cost = $response['extensions']['cost'];
 
-            if ($wait <= 0.0) {
+            if ($cost['requestedQueryCost'] >= self::MAX_REQUESTED_COST || $cost['actualQueryCost'] >= self::MAX_ACTUAL_COST) {
+                $logger->warning('Shopify GraphQL query is expensive', $cost);
+            }
+
+            $wait = ceil(self::checkForThrottle($response));
+
+            if ($wait <= 0) {
                 break;
             }
 
@@ -93,37 +101,27 @@ class HttpRequestGraphQL extends HttpRequestJson
 
     /**
      * @param array $response
-     * @param LoggerInterface $logger
      * @return float seconds
      */
-    public static function waitForThrottle(array $response, LoggerInterface $logger)
+    public static function checkForThrottle(array $response)
     {
         // Check for throttling https://help.shopify.com/api/graphql-admin-api/graphql-admin-api-rate-limits"
         if (!isset($response['errors'])) {
-            $logger->info('No error, wait 0.0');
-            return 0.0;
+            return 0;
         }
 
-        $throttled = false;
         foreach ($response['errors'] as $error) {
             if ($error['extensions']['code'] == 'THROTTLED') {
                 $throttled = true;
             }
         }
 
-        $logger->info("Checked error codes, throttled is $throttled");
-
-        if (!$throttled) {
-            return 0.0;
-        }
-
-        if (!isset($response['extensions']['cost'])) {
-            $logger->info("No extensions cost block");
-            return 0.0;
+        if (!isset($throttled)) {
+            return 0;
         }
 
         $cost = $response['extensions']['cost'];
-        $logger->info("requestedQueryCost {$cost['requestedQueryCost']} currentlyAvailable {$cost['throttleStatus']['currentlyAvailable']} restoreRate {$cost['throttleStatus']['restoreRate']}");
+
         return ($cost['requestedQueryCost'] - $cost['throttleStatus']['currentlyAvailable']) / $cost['throttleStatus']['restoreRate'];
     }
 

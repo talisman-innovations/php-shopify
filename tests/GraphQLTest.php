@@ -38,7 +38,7 @@ class GraphQLTest extends TestCase
 }
 EOD;
         $response = json_decode($response, true);
-        $wait = HttpRequestGraphQL::waitForThrottle($response);
+        $wait = HttpRequestGraphQL::checkForThrottle($response);
         $this->assertEquals(0.28, $wait);
     }
 
