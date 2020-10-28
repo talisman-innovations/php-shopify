@@ -179,10 +179,11 @@ class CurlRequest
         {
             $output   = curl_exec($ch);
             $response = new CurlResponse($output);
+            $info = curl_getinfo($ch);
 
-            self::logRequest($logger, $method, $url, $httpHeaders, $data , self::$lastHttpCode, $response);
+            self::logRequest($logger, $method, $url, $httpHeaders, $data , $info, $response);
 
-            self::$lastHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            self::$lastHttpCode = $info['http_code'];
 
             switch (self::$lastHttpCode) {
                 case 503:
@@ -228,10 +229,10 @@ class CurlRequest
      * @param string $url
      * @param array $httpHeaders
      * @param string $data
-     * @param int $code
+     * @param array $info
      * @param CurlResponse $response
      */
-    protected static function logRequest($logger, $method, $url, $httpHeaders, $data, $code, $response)
+    protected static function logRequest($logger, $method, $url, $httpHeaders, $data, $info, $response)
     {
         if (!$logger) {
             return;
@@ -246,7 +247,8 @@ class CurlRequest
         $body = json_decode($data, TRUE);
         $context['request_body'] = $body ? $body : $data;
 
-        $context['status'] = $code;
+        $context['status'] = $info['http_code'];
+        $context['elapsed_time'] = $info['total_time'];
         $context['response_headers'] = $response->getHeaders();
 
         $body = json_decode($response->getBody(), TRUE);
