@@ -193,12 +193,12 @@ class CurlRequest
                     $sleep = 1 << $retries;
                     $logger->info("Shopify unavailable, retry after $sleep seconds");
                     sleep($sleep);
-                    continue 2;
+                    continue;
                 case 429:
                     $sleep = ceil($response->getHeader('Retry-After'));
                     $logger->info("Shopify rate limiter, retry after $sleep seconds, retry $retries");
                     sleep($sleep);
-                    continue 2;
+                    continue;
                 default:
                     $usage = $response->getHeader('X-Shopify-Shop-Api-Call-Limit');
                     if (!$usage) {

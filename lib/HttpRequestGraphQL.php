@@ -86,7 +86,7 @@ class HttpRequestGraphQL extends HttpRequestJson
                 $logger->warning('Shopify GraphQL query is expensive', $cost);
             }
 
-            $wait = ceil(self::checkForThrottle($response));
+            $wait = is_array($response) ? ceil(self::checkForThrottle($response)) : 0;
 
             if ($wait <= 0) {
                 break;
