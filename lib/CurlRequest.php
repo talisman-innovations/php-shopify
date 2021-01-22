@@ -18,6 +18,7 @@ use Psr\Log\LoggerInterface;
 | This class handles get, post, put, delete HTTP requests
 |
 */
+
 class CurlRequest
 {
     /**
@@ -85,7 +86,7 @@ class CurlRequest
         //Initialize the Curl resource
         $ch = self::init($url, $httpHeaders);
 
-        $response =  self::processRequest($ch, 'GET', $url, $httpHeaders, null, $logger);
+        $response = self::processRequest($ch, 'GET', $url, $httpHeaders, null, $logger);
 
         return $response->getBody();
     }
@@ -109,7 +110,7 @@ class CurlRequest
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 
-        $response =  self::processRequest($ch, 'POST', $url, $httpHeaders, $data, $logger);
+        $response = self::processRequest($ch, 'POST', $url, $httpHeaders, $data, $logger);
 
         return $response->getBody();
     }
@@ -133,7 +134,7 @@ class CurlRequest
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 
-        $response =  self::processRequest($ch, 'PUT', $url, $httpHeaders, $data, $logger);
+        $response = self::processRequest($ch, 'PUT', $url, $httpHeaders, $data, $logger);
 
         return $response->getBody();
     }
@@ -155,7 +156,7 @@ class CurlRequest
         //set the request type
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
 
-        $response =  self::processRequest($ch, 'DELETE', $url, $httpHeaders, null, $logger);
+        $response = self::processRequest($ch, 'DELETE', $url, $httpHeaders, null, $logger);
 
         return $response->getBody();
     }
@@ -176,13 +177,12 @@ class CurlRequest
     protected static function processRequest($ch, $method, $url, $httpHeaders, $data, $logger)
     {
         # Check for 429 leaky bucket error
-        for ($retries = 0; $retries < self::MAX_RETRIES; $retries++)
-        {
-            $output   = curl_exec($ch);
+        for ($retries = 0; $retries < self::MAX_RETRIES; $retries++) {
+            $output = curl_exec($ch);
             $response = new CurlResponse($output);
             $info = curl_getinfo($ch);
 
-            self::logRequest($logger, $method, $url, $httpHeaders, $data , $info, $response);
+            self::logRequest($logger, $method, $url, $httpHeaders, $data, $info, $response);
 
             self::$lastHttpCode = $info['http_code'];
 
@@ -193,25 +193,25 @@ class CurlRequest
                     $sleep = 1 << $retries;
                     $logger->info("Shopify unavailable, retry after $sleep seconds");
                     sleep($sleep);
-                    continue;
+                    break;
                 case 429:
                     $sleep = ceil($response->getHeader('Retry-After'));
                     $logger->info("Shopify rate limiter, retry after $sleep seconds, retry $retries");
                     sleep($sleep);
-                    continue;
+                    break;
                 default:
                     $usage = $response->getHeader('X-Shopify-Shop-Api-Call-Limit');
                     if (!$usage) {
-                        break;
+                        break 2;
                     }
                     list($used, $total) = explode('/', $usage);
-                    if ($total - $used  <= 2) {
-                        $logger->info("Shopify rate limiter, used $usage, waiting 1 second");
-                        sleep(1);
+                    if ($total - $used > 2) {
+                        break 2;
                     }
-            }
+                    $logger->info("Shopify rate limiter, used $usage, waiting 1 second");
+                    sleep(1);
 
-            break;
+            }
         }
 
         if (curl_errno($ch)) {
