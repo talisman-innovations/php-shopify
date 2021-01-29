@@ -201,16 +201,18 @@ class CurlRequest
                     break;
                 default:
                     $usage = $response->getHeader('X-Shopify-Shop-Api-Call-Limit');
+
                     if (!$usage) {
                         break 2;
                     }
-                    list($used, $total) = explode('/', $usage);
-                    if ($total - $used > 2) {
-                        break 2;
-                    }
-                    $logger->info("Shopify rate limiter, used $usage, waiting 1 second");
-                    sleep(1);
 
+                    list($used, $total) = explode('/', $usage);
+
+                    if ($total - $used <= 2) {
+                        $logger->info("Shopify rate limiter, used $usage, waiting 1 second");
+                        sleep(1);
+                    }
+                    break 2;
             }
         }
 
