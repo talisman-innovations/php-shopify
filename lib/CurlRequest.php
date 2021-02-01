@@ -190,6 +190,7 @@ class CurlRequest
                 case 503:
                 case 502:
                 case 520:
+                case 406:
                     $sleep = 1 << $retries;
                     $logger->info("Shopify unavailable, retry after $sleep seconds");
                     sleep($sleep);
